@@ -15,10 +15,12 @@ use Magento\Customer\Api\AccountManagementInterface;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderCustomerManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Store\Model\App\Emulation;
+use Magento\Store\Model\StoreManagerInterface;
 use MagePal\GuestToCustomer\Helper\Data;
 
 /**
@@ -68,6 +70,11 @@ class Index extends Action
     private $emulation;
 
     /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
+
+    /**
      * Index constructor.
      * @param Context $context
      * @param OrderRepositoryInterface $orderRepository
@@ -77,6 +84,7 @@ class Index extends Action
      * @param JsonFactory $resultJsonFactory
      * @param Session $authSession
      * @param Data $helperData
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         Context $context,
@@ -87,7 +95,8 @@ class Index extends Action
         JsonFactory $resultJsonFactory,
         Session $authSession,
         Data $helperData,
-        Emulation $emulation
+        Emulation $emulation,
+        StoreManagerInterface $storeManager
     ) {
         parent::__construct($context);
 
@@ -99,6 +108,7 @@ class Index extends Action
         $this->authSession = $authSession;
         $this->helperData = $helperData;
         $this->emulation = $emulation;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -116,13 +126,20 @@ class Index extends Action
 
         if ($orderId && $order->getEntityId()) {
             try {
-                if ($this->accountManagement->isEmailAvailable($order->getCustomerEmail())) {
+                try {
+                    $customer = $this->customerRepository->get(
+                        $order->getCustomerEmail(),
+                        (int)$this->storeManager->getStore($order->getStoreId())->getWebsiteId()
+                    );
+                } catch (NoSuchEntityException $e) {
+                    $customer = null;
+                }
+
+                if (!$customer) {
                     $this->emulation->startEnvironmentEmulation($order->getStoreId(), 'adminhtml');
                     $customer = $this->orderCustomerService->create($orderId);
                     $this->emulation->stopEnvironmentEmulation();
-                } elseif ($this->helperData->isMergeIfCustomerAlreadyExists()) {
-                    $customer = $this->customerRepository->get($order->getCustomerEmail());
-                } else {
+                } elseif (!$this->helperData->isMergeIfCustomerAlreadyExists()) {
                     return $resultJson->setData(
                         $this->getMessage(true, 'Customer with email address already exists')
                     );
