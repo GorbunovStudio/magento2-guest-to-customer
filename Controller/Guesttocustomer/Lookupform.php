@@ -68,7 +68,7 @@ class Lookupform extends AbstractAccount
             return $resultRedirect;
         }
 
-        $resultPage->getConfig()->getTitle()->set(__(''));
+        $resultPage->getConfig()->getTitle()->set(__('Add exiting order to my account'));
         $resultPage->getLayout()->getBlock('messages')->setEscapeMessageFlag(true);
 
         return $resultPage;
