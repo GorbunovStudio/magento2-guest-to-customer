@@ -82,22 +82,12 @@ class LookupForm extends Template
     }
 
     /**
-     * Get page content
-     *
-     * @return string
-     */
-    public function getPageTitle()
-    {
-        return __('Add exiting order to my account');
-    }
-
-    /**
      * Get post url
      *
      * @return string
      */
     public function getPostUrl()
     {
-        return $this->getUrl('customer/rewards/redirect');
+        return $this->getUrl('customer/guesttocustomer/lookupformPost');
     }
 }

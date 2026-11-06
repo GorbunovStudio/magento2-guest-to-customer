@@ -9,7 +9,7 @@
 ?>
 
 <form class="form form-edit-account"
-      action="<?= $block->escapeUrl($block->getUrl('customer/guesttocustomer/lookupformPost')) ?>"
+      action="<?= $block->escapeUrl($block->getPostUrl()) ?>"
       method="post" id="form-validate"
       data-hasrequired="<?= $block->escapeHtmlAttr(__('* Required Fields')) ?>"
       autocomplete="off" >
